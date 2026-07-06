@@ -1,0 +1,64 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "lebse"
+version = "0.1.0"
+description = "LeBSE — legal-domain sentence embeddings adapted from LaBSE"
+readme = "README.md"
+requires-python = ">=3.9"
+license = "Apache-2.0"
+license-files = ["LICENSE"]
+authors = [{ name = "Andrew H. Bond" }]
+keywords = ["legal-nlp", "sentence-embeddings", "labse", "law", "retrieval", "simcse"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: Legal Industry",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Text Processing :: Linguistic",
+]
+dependencies = ["numpy>=1.24"]
+
+[project.optional-dependencies]
+eval = ["sentence-transformers>=2.7", "scikit-learn>=1.3"]
+train = ["sentence-transformers>=2.7", "torch>=2.1"]
+dev = ["pytest>=8", "black>=24", "ruff>=0.5", "ty>=0.0.1", "scikit-learn>=1.3"]
+
+[project.scripts]
+lebse-train = "lebse.train:main"
+lebse-eval = "lebse.eval:main"
+
+[project.urls]
+Homepage = "https://github.com/ahb-sjsu/lebse"
+Repository = "https://github.com/ahb-sjsu/lebse"
+Issues = "https://github.com/ahb-sjsu/lebse/issues"
+
+[tool.hatch.build.targets.wheel]
+sources = ["src"]
+only-include = ["src/lebse"]
+
+[tool.hatch.build.targets.sdist]
+include = ["src/lebse", "tests", "README.md", "MODEL_CARD.md", "ROADMAP.md", "CHANGELOG.md", "LICENSE"]
+
+[tool.black]
+line-length = 100
+target-version = ["py39"]
+
+[tool.ruff]
+line-length = 100
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.ty.rules]
+# torch / sentence-transformers are optional runtime extras, imported lazily inside functions.
+unresolved-import = "ignore"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"

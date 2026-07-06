@@ -1,0 +1,12 @@
+__pycache__/
+*.pyc
+*.log
+# model artifacts (published to the HF Hub, not git) — anchored to repo root so they do
+# NOT match the package source at src/lebse/
+/lebse/
+/model/
+*.safetensors
+*.bin
+# local secrets / data
+.env
+raw/

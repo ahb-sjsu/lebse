@@ -1,0 +1,6 @@
+# Normalize all text files to LF in the repository.
+* text=auto eol=lf
+*.py text eol=lf
+*.toml text eol=lf
+*.yml text eol=lf
+*.md text eol=lf
