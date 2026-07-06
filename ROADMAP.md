@@ -25,5 +25,21 @@ Move beyond the 256-token window (hierarchical or long-context pooling) so whole
 without truncation.
 
 ## Publishing
-- Push weights to the Hugging Face Hub (`ahb-sjsu/lebse`) with this model card.
-- Keep training/eval code here; keep the model artifact out of git (see `.gitignore`).
+- **PyPI is on hold until a version actually beats base LaBSE** on the held-out benchmark. v1 SimCSE
+  does not (see `MODEL_CARD.md`), so it ships as source on GitHub only, not on PyPI. The
+  trusted-publishing workflow is wired and will fire on the first GitHub release once v2 clears the
+  bar.
+- When ready: push weights to the Hugging Face Hub (`ahb-sjsu/lebse`) with the model card; keep
+  training/eval code here; keep the model artifact out of git (see `.gitignore`).
+
+## Developing
+Run the exact CI checks locally. Note: the `dev` extra intentionally omits `torch`/
+`sentence-transformers`, so run the type check in that same torch-free environment (CI does):
+
+```bash
+pip install -e ".[dev]"
+black --check --no-cache .   # --no-cache: black's cache can hide drift
+ruff check .
+ty check src
+pytest
+```
