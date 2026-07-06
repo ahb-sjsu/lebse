@@ -57,7 +57,11 @@ select = ["E", "F", "I", "UP", "B"]
 
 [tool.ty.rules]
 # torch / sentence-transformers are optional runtime extras, imported lazily inside functions.
+# They are NOT installed in CI (only the `dev` extra is), so their imports are unresolved there and
+# any `# ty: ignore` targeting torch-only diagnostics is "unused" on CI but "used" locally. Ignore
+# both so the same source is clean with or without the optional deps present.
 unresolved-import = "ignore"
+unused-ignore-comment = "ignore"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
