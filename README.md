@@ -1,5 +1,12 @@
 # LeBSE — Legal-BERT Sentence Embeddings (a legal-domain LaBSE)
 
+[![CI](https://github.com/ahb-sjsu/lebse/actions/workflows/ci.yml/badge.svg)](https://github.com/ahb-sjsu/lebse/actions/workflows/ci.yml)
+[![Python](https://img.shields.io/badge/python-3.9%20%7C%203.11%20%7C%203.12-blue.svg)](pyproject.toml)
+[![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+[![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
+[![Checked with ty](https://img.shields.io/badge/types-ty-261230.svg)](https://github.com/astral-sh/ty)
+
 **LeBSE** adapts Google's [LaBSE](https://huggingface.co/sentence-transformers/LaBSE) to the
 register of U.S. case law, so that legal sentences and opinions land in a better-organized
 embedding space than the general-purpose base model — while keeping LaBSE's 109-language alignment.
