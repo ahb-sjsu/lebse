@@ -135,10 +135,14 @@ def main(argv: list[str] | None = None) -> int:
         f"  anisotropy    LaBSE {rb['anisotropy']:+.4f} -> LeBSE {rl['anisotropy']:+.4f} "
         "(lower=better)"
     )
-    print(f"  d(cite_auroc) = {md:+.4f}  95% CI [{lo:+.4f}, {hi:+.4f}]  "
-          f"{'SIGNIFICANT' if sig else 'not significant'}")
-    print(f"  => LeBSE {'IMPROVES' if (md > 0 and lo > 0) else 'does NOT clearly improve'} "
-          "held-out legal retrieval.")
+    print(
+        f"  d(cite_auroc) = {md:+.4f}  95% CI [{lo:+.4f}, {hi:+.4f}]  "
+        f"{'SIGNIFICANT' if sig else 'not significant'}"
+    )
+    print(
+        f"  => LeBSE {'IMPROVES' if (md > 0 and lo > 0) else 'does NOT clearly improve'} "
+        "held-out legal retrieval."
+    )
     print("=================================================")
     return 0
 
