@@ -60,21 +60,26 @@ CI on the AUROC gain.
 
 LeBSE-v2 dramatically improves citation-type relatedness and transfers a small-but-significant amount
 to an independent legal relation (district↔appellate lineage) it never trained on. See
-[`MODEL_CARD.md`](MODEL_CARD.md) for the full protocol and honest caveats. (v1 used unsupervised
-SimCSE and did *not* beat LaBSE — kept in the model card for the record.)
+[`MODEL_CARD.md`](MODEL_CARD.md) for the full protocol and honest caveats, and
+[`PAPER.md`](PAPER.md) for the technical report. (v1 used unsupervised SimCSE and did *not* beat
+LaBSE — kept for the record.)
+
+Reproduce **either** relation from a pairs file with the same command (both published numbers came
+from this evaluator — point it at citation pairs or docket-lineage pairs):
 
 ```bash
-LEBSE_DSN="dbname=courtlistener" python eval.py --n 4000 --pairs 3000 --lebse ./lebse
+lebse-eval-pairs --pairs pairs_citation.jsonl --lebse ahbond/lebse   # trained relation
+lebse-eval-pairs --pairs pairs_docket.jsonl   --lebse ahbond/lebse   # independent relation
 ```
 
 ## Files
 
 | file | purpose |
 |------|---------|
-| `train.py` | SimCSE fine-tune of LaBSE on legal sentences |
-| `eval.py`  | held-out, citation-graph-based comparison vs base LaBSE |
-| `MODEL_CARD.md` | intended use, training data, metrics, limitations |
-| `requirements.txt` | pinned deps |
+| `train.py` / `train_citation.py` | SimCSE (v1 baseline) / citation-supervised (v2) fine-tune |
+| `eval.py` | held-out citation eval driven from a CourtListener Postgres replica |
+| `eval_pairs.py` | DB-free eval from a pairs JSONL — reproduces **both** the citation and docket-lineage numbers |
+| `MODEL_CARD.md` / `PAPER.md` | intended use + full protocol / technical report |
 
 ## License
 

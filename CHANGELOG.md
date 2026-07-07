@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+- Add `lebse-eval-pairs` (`eval_pairs.py`): DB-free held-out evaluator from a pairs JSONL that
+  reproduces **both** the citation and the independent **docket-lineage** numbers; tests added.
+- Add `PAPER.md` technical report (method + honest v1→v2 + both held-out evals + limitations).
+- Repo hygiene: stop tracking stale `dist/` wheels; ignore build artifacts.
+
 ## 0.2.0
 - **LeBSE-v2: citation-supervised model — beats base LaBSE.** SPECTER-style contrastive fine-tune on
   100k (citing, cited) opinion-body pairs from the CourtListener citation graph (NRP A10 GPU).

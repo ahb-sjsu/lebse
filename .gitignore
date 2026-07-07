@@ -13,3 +13,8 @@ raw/
 
 # HF upload artifact (derived from MODEL_CARD.md)
 HF_README.md
+
+# build artifacts
+dist/
+build/
+*.egg-info/
