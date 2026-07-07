@@ -2,60 +2,66 @@
 
 ## Model summary
 - **Base:** `sentence-transformers/LaBSE` (Feng et al., 2022) — 471 M params, 768-dim, 109 languages.
-- **Adaptation:** unsupervised **SimCSE** (Gao et al., 2021) fine-tune on U.S. federal case-law
-  sentences. `MultipleNegativesRankingLoss`, each sentence its own dropout-augmented positive.
+- **Adaptation (v2, current):** citation-**supervised** contrastive fine-tune (SPECTER-style). Positive
+  pairs are (citing opinion body, cited opinion body) from the CourtListener citation graph;
+  `MultipleNegativesRankingLoss` treats the rest of the batch as negatives.
 - **Output:** 768-dim L2-normalized sentence embedding. Drop-in `sentence-transformers` model.
-- **Intended use:** legal sentence/opinion retrieval, clustering, near-duplicate & boilerplate
-  detection, citation recommendation, and as a frozen feature extractor for downstream legal NLP.
-- **Not intended for:** legal advice, outcome prediction on its own, or any decision about a real
-  case. It is a text-similarity encoder, not a legal reasoner.
+- **Intended use:** legal opinion/paragraph retrieval, citation recommendation, clustering,
+  near-duplicate detection, and as a frozen feature extractor / strong legal-domain baseline for
+  downstream legal NLP.
+- **Not intended for:** legal advice, or any decision about a real case. It is a text-similarity
+  encoder, not a legal reasoner.
 
 ## Training data
-Sentences sampled from opinions in the [CourtListener / Free Law Project](https://www.courtlistener.com)
-bulk dump (U.S. federal case law, public domain). No labels. No case outcomes, dispositions, or
-metadata are used in training — this matters for downstream causal/predictive studies, which can use
-LeBSE as a text encoder without leaking outcome information.
+100,344 (citing, cited) opinion-body pairs from the
+[CourtListener / Free Law Project](https://www.courtlistener.com) bulk dump (U.S. federal case law,
+public domain). Body snippets skip the caption/header. **No case outcomes** (affirmed/reversed) are
+used — the signal is citation relatedness only — so LeBSE can be used as a text encoder in downstream
+outcome-prediction studies without leaking the outcome.
 
 ## Evaluation
-Held-out protocol (`eval.py`): opinions with id beyond the training cut, so no evaluated text was
-seen in training. The positive signal is the CourtListener **citation graph**, which SimCSE does not
-use — measuring generalization to legal relatedness, not memorization.
+Two held-out protocols. Splits are **opinion-level** (disjoint opinions in train vs eval), so gains
+are generalization, not memorization.
 
-Run: CourtListener replica, held-out cut id>9400, pool=3000, first held-out run (n=77 citation
-pairs, 413 co-citation pairs; opinion snippets = first ~3000 chars).
+**1. Citation retrieval** (the trained relation, held-out opinions, id %% 10 == 7; 1,293 pairs).
+Positive = true (citing, cited) pair; negative = random cross-pairing. AUROC = P(true > random).
 
-| metric | base LaBSE | LeBSE (v1 SimCSE) | better if |
-|--------|-----------|-------------------|-----------|
-| citation-pair AUROC | **0.484** | 0.340 | higher |
-| co-citation AUROC | **0.713** | 0.680 | higher |
-| anisotropy (rand-pair cos) | 0.614 | **0.578** | lower |
-| alignment | **0.767** | 0.889 | lower |
-| uniformity | −1.510 | **−1.650** | lower |
-| Δ citation-AUROC (95% CI) | — | **−0.145 [−0.214, −0.081]** | CI excludes 0 |
+**2. Docket-lineage retrieval** (an *independent* relation the model never trained on: a district
+opinion and its appellate reviewer, linked by matching docket numbers; 4,406 pairs, party names
+stripped so it tests body semantics). District opinions are pre-2015 (below the id>10M training
+floor) — unseen.
 
-**Honest interpretation — v1 SimCSE did NOT beat the base model.** The one thing it changed as
-expected (lower anisotropy / better uniformity — the documented SimCSE effect) did **not** translate
-into better retrieval; citation-pair separation got significantly *worse*. Two caveats temper how
-strong a negative this is: (1) both models sit near chance on citation-AUROC because a 3000-char
-snippet is dominated by the standardized caption/header, not legal substance; (2) n=77 citation pairs
-is small. But the direction is clear and consistent with theory: a light, small-batch, *unsupervised*
-SimCSE pass on sentences degrades LaBSE's tuned retrieval geometry rather than improving it.
+| eval | base LaBSE | **LeBSE-v2** | Δ AUROC (95% CI) |
+|------|-----------|--------------|------------------|
+| citation retrieval (trained relation) | 0.765 | **0.971** | **+0.206 [+0.190, +0.223]** |
+| docket-lineage (independent relation) | 0.545 | **0.562** | **+0.018 [+0.004, +0.031]** |
+| anisotropy (rand-pair cos, lower=better) | +0.570 | **+0.259** | — |
 
-**Takeaway:** unsupervised SimCSE is the wrong recipe. The path to a real improvement is
-citation-**supervised** contrastive training (SPECTER-style) at large batch — see `ROADMAP.md`. v1
-weights are published as a reproducible baseline, not as a recommended encoder.
+**Honest interpretation.** LeBSE-v2 **dramatically** improves the relatedness it was trained on
+(citation AUROC 0.765 → 0.971) and also improves an **independent** legal relation by a **small but
+statistically significant** margin (docket-lineage +0.018). Both models sit near chance on
+docket-lineage (~0.55) because a district merits opinion and its appellate reviewer, with party
+names removed, are only weakly similar in the body — a genuinely hard task. So: strong on
+citation-type relatedness, with modest real transfer elsewhere. It also markedly improves embedding
+isotropy (0.570 → 0.259).
+
+### v1 (unsupervised SimCSE) — superseded, kept for the record
+The first attempt fine-tuned LaBSE with unsupervised SimCSE (dropout positives). On held-out citation
+retrieval it was significantly **worse** than base LaBSE (Δ AUROC −0.145, 95% CI [−0.214, −0.081]).
+Lesson: a light, small-batch, unsupervised SimCSE pass degrades LaBSE's tuned geometry. Citation
+supervision (v2) reverses this decisively. v1 is not distributed.
 
 ## Limitations
 - Single legal system (U.S. federal); not validated on state, contractual, or non-English legal text
   (though the LaBSE base retains multilingual alignment).
-- SimCSE is a light adaptation; a **citation-supervised** variant (v2, SPECTER-style) is expected to
-  be stronger and is on the roadmap.
-- Truncates at LaBSE's 256-token window — it encodes a sentence/short passage, not a whole opinion.
+- Specialized to citation-type relatedness; transfer to very different relations is real but small.
+- Trained/evaluated at `max_seq_length = 128` tokens — encodes a paragraph, not a whole opinion.
 - Inherits LaBSE's pretraining biases.
 
 ## Reproducibility
-Deterministic given fixed weights: same input → same embedding (no sampling). Training is seeded
-(`random.Random(0)` sentence shuffle). See `train.py` / `eval.py`.
+Deterministic given fixed weights: same input → same embedding (no sampling). Trained on one NVIDIA
+A10 (NRP), `MultipleNegativesRankingLoss`, batch 96, `max_seq_length` 128, 2 epochs (loss 2.30 → 1.38).
+Data extraction, training, and both evals are scripted; see `train.py` / `eval.py` and `ROADMAP.md`.
 
 ## Citation
 See `README.md`.

@@ -4,11 +4,11 @@
 Light, label-free legal adaptation of LaBSE. Establishes the training/eval harness and a held-out,
 citation-graph-based benchmark. Deterministic at inference.
 
-## v2 — citation-supervised (SPECTER-style)
-Use the CourtListener citation graph (~77 M edges) as **supervised positive pairs**: a citing
-opinion and the opinion it cites are a related pair; in-batch (and hard-mined) opinions are
-negatives. This is real legal-relatedness supervision, not dropout noise, and is expected to beat
-SimCSE on retrieval.
+## v2 — citation-supervised (SPECTER-style) — DONE ✅ (shipped as 0.2.0)
+Uses the CourtListener citation graph as **supervised positive pairs** (citing ↔ cited opinion
+bodies); in-batch opinions are negatives. Real legal-relatedness supervision, not dropout noise.
+**Result:** held-out citation-AUROC 0.765 → 0.971 (Δ +0.206), plus a small significant gain on an
+independent docket-lineage task. See `MODEL_CARD.md`. Weights: `ahbond/lebse` on the HF Hub.
 
 **Design constraints:**
 - **Never train on case outcomes** (affirmed/reversed/vacated). Citation supervision encodes
@@ -25,12 +25,13 @@ Move beyond the 256-token window (hierarchical or long-context pooling) so whole
 without truncation.
 
 ## Publishing
-- **PyPI is on hold until a version actually beats base LaBSE** on the held-out benchmark. v1 SimCSE
-  does not (see `MODEL_CARD.md`), so it ships as source on GitHub only, not on PyPI. The
-  trusted-publishing workflow is wired and will fire on the first GitHub release once v2 clears the
-  bar.
-- When ready: push weights to the Hugging Face Hub (`ahb-sjsu/lebse`) with the model card; keep
-  training/eval code here; keep the model artifact out of git (see `.gitignore`).
+- **v2 cleared the bar**, so 0.2.0 is published: package on PyPI, weights on the HF Hub
+  (`ahbond/lebse`). Model artifact stays out of git (see `.gitignore`).
+
+## v3 — next
+- Bigger batch (more negatives) on an A100/L40 (or GradCache on the A10); more pairs; hard negatives.
+- Longer context / hierarchical pooling to embed whole opinions, not a 128-token paragraph.
+- More independent downstream evals (legal-doctrine clustering, statute retrieval).
 
 ## Developing
 Run the exact CI checks locally. Note: the `dev` extra intentionally omits `torch`/

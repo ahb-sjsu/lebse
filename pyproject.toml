@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "lebse"
-version = "0.1.0"
+version = "0.2.0"
 description = "LeBSE — legal-domain sentence embeddings adapted from LaBSE"
 readme = "README.md"
 requires-python = ">=3.9"
@@ -30,6 +30,7 @@ dev = ["pytest>=8", "black>=24", "ruff>=0.5", "ty>=0.0.1", "scikit-learn>=1.3"]
 
 [project.scripts]
 lebse-train = "lebse.train:main"
+lebse-train-citation = "lebse.train_citation:main"
 lebse-eval = "lebse.eval:main"
 
 [project.urls]

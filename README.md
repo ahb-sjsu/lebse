@@ -27,36 +27,41 @@ writing. LeBSE re-tunes the geometry on real opinions so that legally-related te
 closer and the space is more isotropic — useful for legal retrieval, clustering, near-duplicate and
 boilerplate detection, citation recommendation, and as a feature extractor for downstream legal NLP.
 
-## How it's trained
+## How it's trained (v2, citation-supervised)
 
-Unsupervised **SimCSE** (Gao et al., 2021): each sentence is its own positive pair via two dropout
-views; other in-batch sentences are negatives (`MultipleNegativesRankingLoss`). No labels required.
-Base model: `sentence-transformers/LaBSE`. Corpus: sentences sampled from U.S. federal opinions in
-the [CourtListener / Free Law Project](https://www.courtlistener.com/help/api/bulk-data/) bulk data
-(public domain).
-
-> A citation-**supervised** variant (SPECTER-style, using the 77 M-edge citation graph as positive
-> pairs) is the planned v2 and is expected to beat SimCSE; see `ROADMAP`.
+Citation-**supervised** contrastive fine-tuning, SPECTER-style: positive pairs are (citing opinion
+body, cited opinion body) drawn from the CourtListener citation graph, and `MultipleNegativesRanking
+Loss` uses the rest of the batch as negatives. Base model: `sentence-transformers/LaBSE`. Corpus:
+U.S. federal opinions from the [CourtListener / Free Law Project](https://www.courtlistener.com/help/api/bulk-data/)
+bulk data (public domain). No case outcomes are used.
 
 ```bash
-pip install -r requirements.txt
-python train.py --n-opinions 6000 --epochs 1 --dsn "dbname=courtlistener" --out ./lebse
+# lebse-train = SimCSE (v1) baseline; lebse-train-citation = the v2 citation-supervised model.
+lebse-train-citation --pairs pairs_train.jsonl --batch 96 --max-seq-len 128 --epochs 2 --out ./lebse
 ```
+
+> **v1** was unsupervised SimCSE and did *not* beat base LaBSE (it's kept in `MODEL_CARD.md` for the
+> record). The published weights are **v2** (citation-supervised), which does — decisively.
 
 ## Rigorous evaluation
 
-`eval.py` compares LeBSE against base LaBSE on opinions the model **never saw during training**
-(held out by opinion id). The positive signal is the CourtListener **citation graph**, which the
-SimCSE run does not use — so this measures genuine legal-semantic generalization, not memorization.
+Two held-out protocols with **opinion-level** splits (train/eval opinions are disjoint), so any gain
+is generalization: (1) **citation retrieval** — the trained relation, on held-out opinions; and
+(2) **docket-lineage retrieval** — an *independent* relation (a district opinion and its appellate
+reviewer, matched by docket number) the model never trained on. Each reports a paired bootstrap 95%
+CI on the AUROC gain.
 
-Metrics: citation-pair retrieval AUROC (headline), co-citation AUROC, embedding anisotropy
-(Wang-Isola isotropy), alignment/uniformity, and a paired bootstrap 95% CI on the AUROC gain.
+**Held-out results (v2, citation-supervised):**
 
-**First held-out result (honest):** v1 unsupervised SimCSE did **not** beat base LaBSE — citation-pair
-AUROC 0.484 → 0.340 (Δ −0.145, 95% CI [−0.214, −0.081], significant). It lowered anisotropy as SimCSE
-is known to, but that did not help retrieval. See [`MODEL_CARD.md`](MODEL_CARD.md) for the full table
-and caveats. The path to a real gain is citation-**supervised** contrastive training — see
-[`ROADMAP.md`](ROADMAP.md). v1 weights are a reproducible baseline, not a recommended encoder.
+| eval | base LaBSE | **LeBSE-v2** | Δ AUROC (95% CI) |
+|------|-----------|--------------|------------------|
+| citation retrieval (trained relation, held-out) | 0.765 | **0.971** | **+0.206 [+0.190, +0.223]** |
+| docket-lineage (independent relation, unseen) | 0.545 | **0.562** | **+0.018 [+0.004, +0.031]** |
+
+LeBSE-v2 dramatically improves citation-type relatedness and transfers a small-but-significant amount
+to an independent legal relation (district↔appellate lineage) it never trained on. See
+[`MODEL_CARD.md`](MODEL_CARD.md) for the full protocol and honest caveats. (v1 used unsupervised
+SimCSE and did *not* beat LaBSE — kept in the model card for the record.)
 
 ```bash
 LEBSE_DSN="dbname=courtlistener" python eval.py --n 4000 --pairs 3000 --lebse ./lebse

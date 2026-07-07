@@ -7,7 +7,7 @@ def test_version_exposed():
 
 
 def test_default_model_id():
-    assert lebse.DEFAULT_MODEL == "ahb-sjsu/lebse"
+    assert lebse.DEFAULT_MODEL == "ahbond/lebse"
 
 
 def test_import_is_torch_free():

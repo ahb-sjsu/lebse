@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:  # keep `import lebse` torch-free; only for type checkers
     from sentence_transformers import SentenceTransformer
 
-DEFAULT_MODEL = "ahb-sjsu/lebse"
+DEFAULT_MODEL = "ahbond/lebse"
 
 
 def load(model: str = DEFAULT_MODEL, device: str | None = None) -> SentenceTransformer:

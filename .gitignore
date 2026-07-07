@@ -10,3 +10,6 @@ __pycache__/
 # local secrets / data
 .env
 raw/
+
+# HF upload artifact (derived from MODEL_CARD.md)
+HF_README.md
